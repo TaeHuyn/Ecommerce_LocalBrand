@@ -19,7 +19,7 @@ mysql --version
 
 - Cấu hình kết nối Database
 
-- Mở file: src/main/resources/application.yml
+- Mở file: src/main/resources/application.properties
 
 ## Cấu hình như sau:
 
