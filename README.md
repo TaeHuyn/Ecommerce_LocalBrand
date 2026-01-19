@@ -19,21 +19,42 @@ mysql --version
 
 - Cấu hình kết nối Database
 
-- Mở file: src/main/resources/application.yml
+- Mở file: src/main/resources/application.properties
 
 ## Cấu hình như sau:
 
 ```properties
 spring.application.name=ecommerce
 spring.datasource.url=jdbc:mysql://localhost:3306/ecommerce_db
-spring.datasource.username=root
-spring.datasource.password=root
+spring.datasource.username=
+spring.datasource.password=
 spring.jpa.show-sql=true
 spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
 
 spring.jpa.hibernate.ddl-auto=update
 
 server.port=8080
+
+# Swagger configuration
+springdoc.api-docs.path=/api-docs
+springdoc.api-docs.enabled=true
+springdoc.swagger-ui.path=/api/docs
+springdoc.swagger-ui.tags-sorter=alpha
+springdoc.writer-with-order-by-keys=true
+
+# Mail configuration
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=
+spring.mail.password=
+
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.smtp.starttls.required=true
+spring.mail.default-encoding=UTF-8
+
+# Logging
+logging.level.org.springframework.mail=DEBUG
 ```
 
 ## Lưu ý: Thay đổi username và password cho phù hợp với môi trường máy local.
@@ -41,7 +62,7 @@ server.port=8080
 # 3.MIGRATION & SEED DATA
 
 ## Dữ liệu mẫu được khai báo trong file:
-src/main/resources/data.sql
+src/main/resources/ecommerce_db.sql
 
 ## Khi chạy project lần đầu:
 - Hibernate tự động tạo bảng
@@ -65,7 +86,7 @@ mvn spring-boot:run
 Sau khi chạy thành công, server hoạt động tại: **http://localhost:8080**
 
 # 6. API DOCUMENTATION
-Truy cập tài liệu API tại: **http://localhost:8080/swagger-ui.html**
+Truy cập tài liệu API tại: **http://localhost:8080/api/docs**
 
 # 7. CHẠY TESTS
 ```bash
