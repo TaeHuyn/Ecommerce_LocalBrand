@@ -9,10 +9,10 @@ import fpt.com.ecommerce.cart.repository.CartRepository;
 import fpt.com.ecommerce.cart.service.CartService;
 import fpt.com.ecommerce.catalog.entity.ProductVariant;
 import fpt.com.ecommerce.catalog.repository.ProductVariantRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 

@@ -7,6 +7,7 @@ import jakarta.persistence.PreUpdate;
 import lombok.Getter;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 
 @Getter
 @MappedSuperclass
@@ -17,24 +18,23 @@ public abstract class BaseEntity {
             nullable = false,
             updatable = false
     )
-    protected Timestamp createdAt;
+    protected Instant createdAt;
 
     @Column(
             name = "updated_at",
             nullable = false
     )
-    protected Timestamp updatedAt;
+    protected Instant updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        Timestamp now = new Timestamp(System.currentTimeMillis());
-        this.createdAt = now;
-        this.updatedAt = now;
+        createdAt = Instant.now();
+        updatedAt = Instant.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = new Timestamp(System.currentTimeMillis());
+        this.updatedAt = Instant.now();
     }
 }
 

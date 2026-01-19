@@ -1,7 +1,8 @@
 package fpt.com.ecommerce.catalog.controller;
 
+import fpt.com.ecommerce.catalog.dto.ProductDetailResponse;
 import fpt.com.ecommerce.catalog.dto.ProductResponse;
-import fpt.com.ecommerce.catalog.service.ProductService;
+import fpt.com.ecommerce.catalog.service.impl.ProductServiceImpl;
 import fpt.com.ecommerce.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ProductController {
 
-    private final ProductService productService;
+    private final ProductServiceImpl productService;
 
     @GetMapping
     public ApiResponse<Page<ProductResponse>> getProducts(
@@ -36,19 +37,19 @@ public class ProductController {
     }
 
     @GetMapping("/{slug}")
-    public ApiResponse<ProductResponse> getProductDetail(@PathVariable String slug) {
+    public ApiResponse<ProductDetailResponse> getProductDetail(@PathVariable String slug) {
         return ApiResponse.success(
                 "Product retrieved successfully",
                 productService.getProductBySlug(slug)
         );
     }
 
-    @GetMapping("/{id}")
-    public ApiResponse<ProductResponse> getProductById(@PathVariable Long id) {
-        return ApiResponse.success(
-                "Product retrieved successfully",
-                productService.getProductById(id)
-        );
-    }
+//    @GetMapping("/{id}")
+//    public ApiResponse<ProductResponse> getProductById(@PathVariable Long id) {
+//        return ApiResponse.success(
+//                "Product retrieved successfully",
+//                productService.getProductById(id)
+//        );
+//    }
 
 }

@@ -1,10 +1,10 @@
 package fpt.com.ecommerce.catalog.entity;
 
+import fpt.com.ecommerce.common.entity.BaseEntity;
 import fpt.com.ecommerce.common.enums.ProductStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.sql.Timestamp;
 import java.util.List;
 
 @Entity
@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Product {
+public class Product extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,7 +45,4 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ProductVariant> variants;
-
-    @Column(updatable = false)
-    private Timestamp createdAt;
 }

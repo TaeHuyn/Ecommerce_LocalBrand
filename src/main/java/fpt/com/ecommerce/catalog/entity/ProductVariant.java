@@ -30,6 +30,8 @@ public class ProductVariant {
     @Column(nullable = false)
     private Integer stock;
 
+    private Integer reservedStock = 0;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;

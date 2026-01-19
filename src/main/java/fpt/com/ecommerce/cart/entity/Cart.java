@@ -4,7 +4,6 @@ import fpt.com.ecommerce.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +26,9 @@ public class Cart extends BaseEntity {
     @OneToMany(
             mappedBy = "cart",
             cascade = CascadeType.ALL,
+            orphanRemoval = true,
             fetch = FetchType.LAZY
     )
+    @Builder.Default
     private List<CartItem> items = new ArrayList<>();
 }
