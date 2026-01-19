@@ -86,7 +86,7 @@ mvn spring-boot:run
 Sau khi chạy thành công, server hoạt động tại: **http://localhost:8080**
 
 # 6. API DOCUMENTATION
-Truy cập tài liệu API tại: **http://localhost:8080/swagger-ui.html**
+Truy cập tài liệu API tại: **http://localhost:8080/api/docs**
 
 # 7. CHẠY TESTS
 ```bash
