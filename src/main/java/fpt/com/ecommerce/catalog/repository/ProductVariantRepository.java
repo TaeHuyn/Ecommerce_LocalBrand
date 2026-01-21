@@ -10,28 +10,31 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
 
     @Modifying
     @Query("""
-        UPDATE ProductVariant v
-        SET v.reservedStock = v.reservedStock + :qty
-        WHERE v.id = :id
-          AND (v.stock - v.reservedStock) >= :qty
-    """)
+                UPDATE ProductVariant v
+                SET v.reservedStock = v.reservedStock + :qty
+                WHERE v.id = :id
+                  AND (v.stock - v.reservedStock) >= :qty
+            """)
     int reserveStock(@Param("id") Long id, @Param("qty") int qty);
 
     @Modifying
     @Query("""
-        UPDATE ProductVariant v
-        SET v.reservedStock = v.reservedStock + :qty
-        WHERE v.id = :id
-          AND (v.stock - v.reservedStock) >= :qty
-    """)
-    void releaseStock(@Param("id") Long id, @Param("qty") int qty);
+                UPDATE ProductVariant v
+                SET v.reservedStock = v.reservedStock - :qty
+                WHERE v.id = :id
+                  AND v.reservedStock >= :qty
+            """)
+    int releaseStock(@Param("id") Long id, @Param("qty") int qty);
 
     @Modifying
     @Query("""
-        UPDATE ProductVariant v
-        SET v.reservedStock = v.reservedStock - :qty
-        WHERE v.id = :id
-    """)
-    void confirmStock(@Param("id") Long id, @Param("qty") int qty);
+                UPDATE ProductVariant v
+                SET v.reservedStock = v.reservedStock - :qty,
+                    v.stock = v.stock - :qty
+                WHERE v.id = :id
+                  AND v.reservedStock >= :qty
+                  AND v.stock >= :qty
+            """)
+    int confirmStock(@Param("id") Long id, @Param("qty") int qty);
 
 }

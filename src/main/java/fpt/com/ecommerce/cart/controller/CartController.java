@@ -1,9 +1,11 @@
 package fpt.com.ecommerce.cart.controller;
 
 import fpt.com.ecommerce.cart.dto.request.AddToCartRequest;
+import fpt.com.ecommerce.cart.dto.request.UpdateCartItemRequest;
 import fpt.com.ecommerce.cart.dto.response.CartResponse;
 import fpt.com.ecommerce.cart.service.CartService;
 import fpt.com.ecommerce.common.response.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -35,6 +37,17 @@ public class CartController {
         return ApiResponse.success(
                 "Add to cart successfully",
                 cartService.addToCart(cartToken, addToCartRequest)
+        );
+    }
+
+    @PatchMapping("/items")
+    public ApiResponse<CartResponse> updateCartQuantity(
+            @RequestHeader("X-Cart-Token") String cartToken,
+            @Valid @RequestBody UpdateCartItemRequest updateCartItemRequest
+    ) {
+        return ApiResponse.success(
+                "Update cart quantity successfully",
+                cartService.updateItemQuantity(cartToken, updateCartItemRequest)
         );
     }
 

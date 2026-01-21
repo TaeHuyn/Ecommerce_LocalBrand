@@ -1,100 +1,128 @@
 package fpt.com.ecommerce.order.service.impl;
 
 import fpt.com.ecommerce.cart.entity.Cart;
-import fpt.com.ecommerce.cart.entity.CartItem;
 import fpt.com.ecommerce.cart.repository.CartRepository;
 import fpt.com.ecommerce.cart.service.CartService;
 import fpt.com.ecommerce.common.enums.OrderStatus;
-import fpt.com.ecommerce.inventory.service.InventoryService;
-import fpt.com.ecommerce.order.dto.request.CheckoutRequest;
+import fpt.com.ecommerce.order.dto.request.CheckoutConfirmRequest;
+import fpt.com.ecommerce.order.dto.response.CheckoutInitResponse;
 import fpt.com.ecommerce.order.dto.response.OrderResponse;
 import fpt.com.ecommerce.order.entity.Order;
 import fpt.com.ecommerce.order.entity.OrderItem;
 import fpt.com.ecommerce.order.mapper.OrderMapper;
 import fpt.com.ecommerce.order.repository.OrderRepository;
 import fpt.com.ecommerce.order.service.OrderService;
-import lombok.AccessLevel;
+import fpt.com.ecommerce.reservation.entity.Reservation;
+import fpt.com.ecommerce.reservation.service.ReservationService;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Transactional
 public class OrderServiceImpl implements OrderService {
 
-    OrderMapper orderMapper;
-    CartService cartService;
-    EmailServiceImpl emailService;
-    InventoryService inventoryService;
-    CartRepository cartRepository;
-    OrderRepository orderRepository;
+        private final OrderMapper orderMapper;
+        private final CartRepository cartRepository;
+        private final CartService cartService;
+        private final ReservationService reservationService;
+        private final OrderRepository orderRepository;
+        private final EmailServiceImpl emailService;
 
-    @Override
-    public OrderResponse checkout(String cartToken, CheckoutRequest checkoutRequest) {
+        @Value("${reservation.ttl.ms:60000}")
+        long reservationTtlMs;
 
-        Cart cart = cartRepository.findByCartToken(cartToken)
-                .orElseThrow(() -> new RuntimeException("Cart not found"));
+        @Override
+        public CheckoutInitResponse initCheckout(String cartToken) {
 
-        if (cart.getItems().isEmpty()) {
-            throw new RuntimeException("No items in your cart");
+                Cart cart = cartRepository.findByCartToken(cartToken)
+                        .orElseThrow(() -> new RuntimeException("Cart not found"));
+
+                if (cart.getItems().isEmpty()) {
+                        throw new RuntimeException("Cart is empty");
+                }
+
+                List<Reservation> reservations = cart.getItems().stream()
+                        .map(item -> reservationService.createReservation(
+                                item.getProductVariant(),
+                                cart,
+                                item.getQuantity(),
+                                reservationTtlMs
+                        ))
+                        .toList();
+
+                int totalAmount = cart.getItems().stream()
+                        .mapToInt(i -> i.getPrice() * i.getQuantity())
+                        .sum();
+
+                return CheckoutInitResponse.builder()
+                        .reservationKeys(
+                                reservations.stream()
+                                        .map(Reservation::getReservationKey)
+                                        .toList()
+                        )
+                        .expiresAt(Instant.now().plusMillis(reservationTtlMs))
+                        .totalAmount(totalAmount)
+                        .build();
         }
 
-        // reserve stock
-        for (CartItem item: cart.getItems()) {
-            inventoryService.reserve(
-                    item.getProductVariant().getId(),
-                    item.getQuantity()
-            );
-        }
 
-        Order order = Order.builder()
-                .orderCode(UUID.randomUUID().toString())
-                .customerName(checkoutRequest.getCustomerName())
-                .phone(checkoutRequest.getPhone())
-                .address(checkoutRequest.getAddress())
-                .paymentMethod(checkoutRequest.getPaymentMethod())
-                .orderStatus(OrderStatus.PENDING)
-                .totalAmount(
+        @Override
+        public OrderResponse confirmCheckout(CheckoutConfirmRequest request) {
+
+                List<Reservation> reservations = request.getReservationKeys().stream()
+                        .map(reservationService::getValidReservation)
+                        .toList();
+
+                Cart cart = reservations.get(0).getCart();
+
+                Order order = Order.builder()
+                        .orderCode(UUID.randomUUID().toString())
+                        .customerName(request.getCustomerName())
+                        .phone(request.getPhone())
+                        .address(request.getAddress())
+                        .paymentMethod(request.getPaymentMethod())
+                        .orderStatus(OrderStatus.PENDING)
+                        .totalAmount(request.getTotalAmount())
+                        .build();
+
+                order.setOrderItems(
                         cart.getItems().stream()
-                                .mapToInt(i -> i.getPrice() * i.getQuantity())
-                                .sum()
-                )
-                .build();
+                                .map(item -> OrderItem.builder()
+                                        .order(order)
+                                        .productVariant(item.getProductVariant())
+                                        .quantity(item.getQuantity())
+                                        .price(item.getPrice())
+                                        .build())
+                                .toList()
+                );
 
-        order.setOrderItems(
-                cart.getItems().stream().map(cartItem ->
-                        OrderItem.builder()
-                                .order(order)
-                                .productVariant(cartItem.getProductVariant())
-                                .quantity(cartItem.getQuantity())
-                                .price(cartItem.getPrice())
-                                .build()
-                ).toList()
-        );
+                Order savedOrder = orderRepository.save(order);
 
-        Order savedOrder = orderRepository.save(order);
+                for (Reservation r : reservations) {
+                        reservationService.commitReservation(r.getReservationKey(), savedOrder);
+                }
 
-        cartService.clearCart(cartToken);
+                cartService.clearCart(cart.getCartToken());
 
-        emailService.sendOrderConfirmation(
-                checkoutRequest.getEmail(),
-                savedOrder.getOrderCode()
-        );
+                emailService.sendOrderConfirmation(
+                        request.getEmail(),
+                        savedOrder
+                );
 
-        return orderMapper.toResponse(savedOrder);
-    }
+                return orderMapper.toResponse(savedOrder);
+        }
 
-    @Override
-    public OrderResponse getByOrderCode(String orderCode) {
-
-        Order order = orderRepository.getByOrOrderCode(orderCode)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        return orderMapper.toResponse(order);
-    }
+        @Override
+        public OrderResponse getByOrderCode(String orderCode) {
+                Order order = orderRepository.getByOrderCode(orderCode)
+                        .orElseThrow(() -> new RuntimeException("Order not found"));
+                return orderMapper.toResponse(order);
+        }
 }

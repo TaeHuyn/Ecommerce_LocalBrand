@@ -1,41 +1,45 @@
 package fpt.com.ecommerce.order.controller;
 
 import fpt.com.ecommerce.common.response.ApiResponse;
-import fpt.com.ecommerce.order.dto.request.CheckoutRequest;
+import fpt.com.ecommerce.order.dto.request.CheckoutConfirmRequest;
+import fpt.com.ecommerce.order.dto.response.CheckoutInitResponse;
 import fpt.com.ecommerce.order.dto.response.OrderResponse;
 import fpt.com.ecommerce.order.service.OrderService;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderController {
 
-    OrderService orderService;
+    private final OrderService orderService;
 
-    @PostMapping("/checkout")
-    public ApiResponse<OrderResponse> checkout(
-            @RequestHeader("X-Cart-Token") String cartToken,
-            @RequestBody CheckoutRequest checkoutRequest
+    @PostMapping("/checkout/init")
+    public ApiResponse<CheckoutInitResponse> initCheckout(
+            @RequestHeader("X-Cart-Token") String cartToken
     ) {
-
         return ApiResponse.success(
-                "Cảm ơn bạn đã đặt hàng! Đơn hàng của bạn đang được xử lý.",
-                orderService.checkout(cartToken, checkoutRequest)
+                "Stock reserved",
+                orderService.initCheckout(cartToken)
+        );
+    }
+
+    @PostMapping("/checkout/confirm")
+    public ApiResponse<OrderResponse> confirmCheckout(
+            @RequestBody CheckoutConfirmRequest request
+    ) {
+        return ApiResponse.success(
+                "Order placed successfully",
+                orderService.confirmCheckout(request)
         );
     }
 
     @GetMapping("/{orderCode}")
     public ApiResponse<OrderResponse> getOrderByCode(@PathVariable String orderCode) {
-
         return ApiResponse.success(
                 "Order retrieved successfully",
                 orderService.getByOrderCode(orderCode)
         );
     }
-
 }

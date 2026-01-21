@@ -1,6 +1,7 @@
 package fpt.com.ecommerce.cart.service.impl;
 
 import fpt.com.ecommerce.cart.dto.request.AddToCartRequest;
+import fpt.com.ecommerce.cart.dto.request.UpdateCartItemRequest;
 import fpt.com.ecommerce.cart.dto.response.CartItemResponse;
 import fpt.com.ecommerce.cart.dto.response.CartResponse;
 import fpt.com.ecommerce.cart.entity.Cart;
@@ -73,6 +74,24 @@ public class CartServiceImpl implements CartService {
         } else {
             item.setQuantity(item.getQuantity() + request.getQuantity());
         }
+
+        return toResponse(cart);
+    }
+
+    @Override
+    public CartResponse updateItemQuantity(String cartToken, UpdateCartItemRequest request) {
+
+        Cart cart = cartRepository.findByCartToken(cartToken)
+                .orElseThrow(() -> new RuntimeException("Cart not found"));
+
+        CartItem item = cart.getItems().stream()
+                .filter(i -> i.getProductVariant().getId().equals(request.getVariantId()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Product variant not found"));
+
+        ProductVariant variant = item.getProductVariant();
+
+        item.setQuantity(request.getQuantity());
 
         return toResponse(cart);
     }

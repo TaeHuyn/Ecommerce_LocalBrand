@@ -43,13 +43,4 @@ public class ProductController {
                 productService.getProductBySlug(slug)
         );
     }
-
-//    @GetMapping("/{id}")
-//    public ApiResponse<ProductResponse> getProductById(@PathVariable Long id) {
-//        return ApiResponse.success(
-//                "Product retrieved successfully",
-//                productService.getProductById(id)
-//        );
-//    }
-
 }
